@@ -27,11 +27,16 @@ const char * Response_Commands[]={
 	    "+CREG"            // Network registration info
 };
 
-
+typedef enum 
+{
+  PASSED=1,
+  FAILED =0
+}service_t;
 
 Commands_t Command_Stat =POWER_OFF;
 _Bool sent_command =0;
 uint8_t Retry=0;
+service_t Iscommandpass = FAILED;
 
 void EC_Manager_Proceeder(_Bool Acknowledged, uint16_t Timeout)
 {
@@ -44,72 +49,121 @@ void EC_Manager_Proceeder(_Bool Acknowledged, uint16_t Timeout)
        sent_command=1;
       }
     }
-    else{
+    else
+    {
       if(Acknowledged == 0)
       {
-   	 if(Timer_Delay++ > Timeout)
-   	 {
-   		if(Retry++ >= 3 )
-   		{
-   			Command_Stat--;
-   			sent_command = 0;
-   			Retry = 0;
-   		}
-   		Timer_Delay = 0;
-   	 }
+        if(Timer_Delay++ > Timeout)
+        {
+          if(Retry++ >= 3 )
+          {
+            sent_command = 0;
+            Iscommandpass = FAILED;
+            Retry = 0;
+          }
+          Timer_Delay = 0;
+        }
       }
     }
   if(Acknowledged == 1)
   {
-      Retry = 0;
+    Retry = 0;
     if(strstr(Response,Response_Commands[Command_Stat]))
     {
       /* It is present in Response */
         sent_command = 0;
-        Command_Stat++;
+        Iscommandpass = PASSED;
         Timer_Delay = 0;
 
     }
     else
     {
-   	 Retry = 0 ;
+   	    Retry = 0 ;
     }
   }
 }
+
+
+
 void EC_Manager_Handler(_Bool Acknowledged)
 {
 	static uint16_t Timer_Delay =0;
    switch(Command_Stat)
    {
    case POWER_OFF:
-//	   __POWER_ON__;
+   EC_Manager_Proceeder(Acknowledged,4000);
+	   __POWER_ON__;
 	   if(Timer_Delay++ > 5000)
 	   {
-//		   __POWER_OFF__;
+		   __POWER_OFF__;
 ////		   __RESET_ON__;
-//		   Timer_Delay = 0;
-		   Command_Stat = ATCOMMAND;
-//		   EC_Manager_Proceeder(Acknowledged,4000);
+		   Timer_Delay = 0;
+      
+		    Command_Stat = ATCOMMAND;
+
+//		    EC_Manager_Proceeder(Acknowledged,4000);
 	   }
 
    break;
    case ATCOMMAND:
-	   EC_Manager_Proceeder(Acknowledged,1000);
+      if(Iscommandpass == PASSED)
+      {
+        EC_Manager_Proceeder(Acknowledged,1000);
+      }
+      else if(Iscommandpass == FAILED)
+      {
+       Command_Stat = POWER_OFF;
+      }
    break;
    case MODULE_INFO:
-	   EC_Manager_Proceeder(Acknowledged, 2000);
+      if(Iscommandpass == PASSED)
+      {
+        EC_Manager_Proceeder(Acknowledged,1000);
+      }
+      else if(Iscommandpass == FAILED)
+      {
+       Command_Stat = ATCOMMAND;
+      }
    break;
    case FUNCTIONALITY:
-	   EC_Manager_Proceeder(Acknowledged,6000);
+      if(Iscommandpass == PASSED)
+      {
+        EC_Manager_Proceeder(Acknowledged,1000);
+      }
+      else if(Iscommandpass == FAILED)
+      {
+       Command_Stat = MODULE_INFO;
+      }
    break;
    case SIM_STATUS:
-	   EC_Manager_Proceeder(Acknowledged,6000);
+      if(Iscommandpass == PASSED)
+      {
+        EC_Manager_Proceeder(Acknowledged,1000);
+      }
+      else if(Iscommandpass == FAILED)
+      {
+       Command_Stat = FUNCTIONALITY;
+      }
    break;
    case SIGNAL_QUALITY:
-	   EC_Manager_Proceeder(Acknowledged,6000);
+      if(Iscommandpass == PASSED)
+      {
+        EC_Manager_Proceeder(Acknowledged,1000);
+      }
+      else if(Iscommandpass == FAILED)
+      {
+       Command_Stat = SIM_STATUS;
+      }
    break;
    case NETWORK_REG:
-	   EC_Manager_Proceeder(Acknowledged,6000);
+      if(Iscommandpass == PASSED)
+      {
+        EC_Manager_Proceeder(Acknowledged,1000);
+      }
+      else if(Iscommandpass == FAILED)
+      {
+       Command_Stat = SIGNAL_QUALITY;
+      }
    break;
    }
 }
