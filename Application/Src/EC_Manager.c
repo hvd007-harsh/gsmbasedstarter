@@ -13,8 +13,8 @@ const char* Request_Commands[]=
 		"ATI\r\n",
 		"AT+CFUN?\r\n",
 		"AT+CPIN?\r\n",
-		"AT+CSQ?\r\n",
-		"AT+CREG?\r\n",
+		"AT+CSQ\r\n",
+		"AT+CREG=1\r\n",
 };
 
 const char * Response_Commands[]={
@@ -24,13 +24,14 @@ const char * Response_Commands[]={
 	    "+CFUN: 1",            // CFUN full functionality done (URC)
 	    "+CPIN: READY",    // SIM ready
 	    "+CSQ",            // Signal quality (contains +CSQ: <rssi>,<ber>)
-	    "+CREG"            // Network registration info
+	    "OK"            // Network registration info
 };
 
 typedef enum 
 {
-  PASSED=1,
-  FAILED =0
+  FAILED =0,
+  PASSED,
+  IDLE
 }service_t;
 
 Commands_t Command_Stat =POWER_OFF;
@@ -67,7 +68,7 @@ void EC_Manager_Proceeder(_Bool Acknowledged, uint16_t Timeout)
     }
   if(Acknowledged == 1)
   {
-    Retry = 0;
+//    Retry = 0;
     if(strstr(Response,Response_Commands[Command_Stat]))
     {
       /* It is present in Response */
@@ -79,12 +80,13 @@ void EC_Manager_Proceeder(_Bool Acknowledged, uint16_t Timeout)
     else
     {
    	    Retry = 0 ;
+   	 Iscommandpass = FAILED;
     }
   }
 }
 
 
-
+_Bool Isgsmmoduleactivated = 0;
 void EC_Manager_Handler(_Bool Acknowledged)
 {
 	static uint16_t Timer_Delay =0;
@@ -92,77 +94,118 @@ void EC_Manager_Handler(_Bool Acknowledged)
    {
    case POWER_OFF:
    EC_Manager_Proceeder(Acknowledged,4000);
+     if(Isgsmmoduleactivated == 0)
+     {
 	   __POWER_ON__;
 	   if(Timer_Delay++ > 5000)
 	   {
 		   __POWER_OFF__;
 ////		   __RESET_ON__;
 		   Timer_Delay = 0;
-      
+           Iscommandpass = IDLE;
 		    Command_Stat = ATCOMMAND;
 
 //		    EC_Manager_Proceeder(Acknowledged,4000);
 	   }
+     }
 
    break;
    case ATCOMMAND:
       if(Iscommandpass == PASSED)
       {
-        EC_Manager_Proceeder(Acknowledged,1000);
+    	  Command_Stat++;
+    	  Isgsmmoduleactivated = 1;
+    	  Iscommandpass =IDLE;
+
       }
       else if(Iscommandpass == FAILED)
       {
        Command_Stat = POWER_OFF;
       }
+      else if(Iscommandpass == IDLE)
+      {
+   	   EC_Manager_Proceeder(Acknowledged,1000);
+      }
+
    break;
    case MODULE_INFO:
       if(Iscommandpass == PASSED)
       {
-        EC_Manager_Proceeder(Acknowledged,1000);
+    	  Command_Stat++;
+    	  Iscommandpass =IDLE;
       }
       else if(Iscommandpass == FAILED)
       {
        Command_Stat = ATCOMMAND;
+ 	  Iscommandpass =IDLE;
+      }
+      else if(Iscommandpass == IDLE)
+      {
+   	   EC_Manager_Proceeder(Acknowledged,1000);
       }
    break;
    case FUNCTIONALITY:
       if(Iscommandpass == PASSED)
       {
-        EC_Manager_Proceeder(Acknowledged,1000);
+        Command_Stat++;
+        Iscommandpass =IDLE;
       }
       else if(Iscommandpass == FAILED)
       {
        Command_Stat = MODULE_INFO;
+ 	  Iscommandpass =IDLE;
+      }
+      else if(Iscommandpass == IDLE)
+      {
+          EC_Manager_Proceeder(Acknowledged,1000);
       }
    break;
    case SIM_STATUS:
       if(Iscommandpass == PASSED)
       {
-        EC_Manager_Proceeder(Acknowledged,1000);
+    	  Command_Stat++;
+    	  Iscommandpass =IDLE;
       }
       else if(Iscommandpass == FAILED)
       {
        Command_Stat = FUNCTIONALITY;
       }
+      else if(Iscommandpass == IDLE)
+      {
+          EC_Manager_Proceeder(Acknowledged,5000);
+      }
    break;
    case SIGNAL_QUALITY:
       if(Iscommandpass == PASSED)
       {
-        EC_Manager_Proceeder(Acknowledged,1000);
+    	  Command_Stat++;
+    	  Iscommandpass =IDLE;
       }
       else if(Iscommandpass == FAILED)
       {
        Command_Stat = SIM_STATUS;
+ 	  Iscommandpass =IDLE;
+      }
+      else if(Iscommandpass == IDLE)
+      {
+          EC_Manager_Proceeder(Acknowledged,5000);
       }
    break;
    case NETWORK_REG:
       if(Iscommandpass == PASSED)
       {
-        EC_Manager_Proceeder(Acknowledged,1000);
+    	  Command_Stat++;
+    	  Iscommandpass =IDLE;
+          Command_Stat = SIGNAL_QUALITY;
       }
       else if(Iscommandpass == FAILED)
       {
        Command_Stat = SIGNAL_QUALITY;
+ 	  Iscommandpass =IDLE;
+      }
+      else if(Iscommandpass == IDLE)
+      {
+          EC_Manager_Proceeder(Acknowledged,1000);
       }
    break;
    }

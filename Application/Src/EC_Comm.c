@@ -57,7 +57,7 @@ uint8_t snd_cmd[] = {0x0d, 0x0a};
 void EC_Comm_Send( char * buffer)
 {
    memcpy(Txdata,buffer,sizeof(Txdata)/sizeof(uint8_t));
-   HAL_UART_Transmit(&huart2,buffer, sizeof(buffer)/sizeof(char), 0xFFFF);
+   HAL_UART_Transmit(&huart2,buffer, strlen(buffer), 0xFFFF);
  //  HAL_UART_Transmit(&huart2,snd_cmd, sizeof(snd_cmd)/sizeof(uint8_t), 0xFFFF);
 }
 
