@@ -5,14 +5,17 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
+../Application/Src/EC_Api.c \
 ../Application/Src/EC_Comm.c \
 ../Application/Src/EC_Manager.c 
 
 OBJS += \
+./Application/Src/EC_Api.o \
 ./Application/Src/EC_Comm.o \
 ./Application/Src/EC_Manager.o 
 
 C_DEPS += \
+./Application/Src/EC_Api.d \
 ./Application/Src/EC_Comm.d \
 ./Application/Src/EC_Manager.d 
 
@@ -24,7 +27,7 @@ Application/Src/%.o Application/Src/%.su Application/Src/%.cyclo: ../Application
 clean: clean-Application-2f-Src
 
 clean-Application-2f-Src:
-	-$(RM) ./Application/Src/EC_Comm.cyclo ./Application/Src/EC_Comm.d ./Application/Src/EC_Comm.o ./Application/Src/EC_Comm.su ./Application/Src/EC_Manager.cyclo ./Application/Src/EC_Manager.d ./Application/Src/EC_Manager.o ./Application/Src/EC_Manager.su
+	-$(RM) ./Application/Src/EC_Api.cyclo ./Application/Src/EC_Api.d ./Application/Src/EC_Api.o ./Application/Src/EC_Api.su ./Application/Src/EC_Comm.cyclo ./Application/Src/EC_Comm.d ./Application/Src/EC_Comm.o ./Application/Src/EC_Comm.su ./Application/Src/EC_Manager.cyclo ./Application/Src/EC_Manager.d ./Application/Src/EC_Manager.o ./Application/Src/EC_Manager.su
 
 .PHONY: clean-Application-2f-Src
 

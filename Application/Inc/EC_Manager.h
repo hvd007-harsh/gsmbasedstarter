@@ -14,10 +14,13 @@ typedef enum {
 	MODULE_INFO,
 	FUNCTIONALITY,
 	SIM_STATUS,
-	SIGNAL_QUALITY,
 	NETWORK_REG,
+	SIGNAL_QUALITY,
     TOTAL_COMMAND,
 } Commands_t;
+
+extern uint8_t buff[100];
+extern uint8_t Response_Index;
 
 void EC_Manager_Proceeder(_Bool Acknowledged, uint16_t Timeout);
 void EC_Manager_Handler(_Bool Acknowledged);

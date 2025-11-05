@@ -1,3 +1,4 @@
+"./Application/Src/EC_Api.o"
 "./Application/Src/EC_Comm.o"
 "./Application/Src/EC_Manager.o"
 "./Core/Src/main.o"

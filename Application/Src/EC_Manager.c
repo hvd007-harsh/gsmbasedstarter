@@ -13,8 +13,8 @@ const char* Request_Commands[]=
 		"ATI\r\n",
 		"AT+CFUN?\r\n",
 		"AT+CPIN?\r\n",
-		"AT+CSQ\r\n",
 		"AT+CREG=1\r\n",
+		"AT+CSQ\r\n",
 };
 
 const char * Response_Commands[]={
@@ -23,8 +23,8 @@ const char * Response_Commands[]={
 	    "Quectel",         // ATI response contains module name
 	    "+CFUN: 1",            // CFUN full functionality done (URC)
 	    "+CPIN: READY",    // SIM ready
+	    "OK" ,           // Network registration info
 	    "+CSQ",            // Signal quality (contains +CSQ: <rssi>,<ber>)
-	    "OK"            // Network registration info
 };
 
 typedef enum 
@@ -38,6 +38,9 @@ Commands_t Command_Stat =POWER_OFF;
 _Bool sent_command =0;
 uint8_t Retry=0;
 service_t Iscommandpass = FAILED;
+uint8_t buff[100];
+char * Response_Character;
+uint8_t Response_Index =0;
 
 void EC_Manager_Proceeder(_Bool Acknowledged, uint16_t Timeout)
 {
@@ -69,9 +72,11 @@ void EC_Manager_Proceeder(_Bool Acknowledged, uint16_t Timeout)
   if(Acknowledged == 1)
   {
 //    Retry = 0;
-    if(strstr(Response,Response_Commands[Command_Stat]))
+    if((Response_Character = strstr(Response, Response_Commands[Command_Stat])))
     {
       /* It is present in Response */
+    	memcpy(buff,Response, sizeof(Response)/sizeof(uint8_t));
+    	Response_Index = (int)(Response_Character - Response) ;
         sent_command = 0;
         Iscommandpass = PASSED;
         Timer_Delay = 0;
@@ -180,6 +185,7 @@ void EC_Manager_Handler(_Bool Acknowledged)
       {
     	  Command_Stat++;
     	  Iscommandpass =IDLE;
+    	  EC_Signal_Extract();
       }
       else if(Iscommandpass == FAILED)
       {
@@ -196,7 +202,6 @@ void EC_Manager_Handler(_Bool Acknowledged)
       {
     	  Command_Stat++;
     	  Iscommandpass =IDLE;
-          Command_Stat = SIGNAL_QUALITY;
       }
       else if(Iscommandpass == FAILED)
       {
